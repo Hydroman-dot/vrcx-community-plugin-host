@@ -13,6 +13,101 @@ export function gameLogPeople(store) {
     }
     return [...people.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 10000);
 }
+// Production Vue keeps container._vnode even when devtools annotations are absent.
+// Only this version-specific adapter inspects it; never resolve people by name/index.
+export function vnodePath(root, element) {
+    const seen = new Set(); let budget = 50000;
+    function visit(node, path) {
+        if (!node || typeof node !== 'object' || seen.has(node) || --budget < 0) return null;
+        seen.add(node); const next = [...path, node];
+        if (node.el === element) return next;
+        const children = [node.component?.subTree, node.suspense?.activeBranch, ...(Array.isArray(node.children) ? node.children : [])];
+        for (const child of children) { const found = visit(child, next); if (found) return found; }
+        return null;
+    }
+    return visit(root, []);
+}
+export function resolvePlayerRow(w, element) {
+    if (w.location.hash.split('?')[0] !== '#/player-list') return null;
+    const row = element?.closest?.('tbody tr[data-slot="table-row"]'); if (!row) return null;
+    const path = vnodePath(w.document.getElementById('root')?._vnode, row); if (!path) return null;
+    const table = path.map(v => v.component?.props?.table || v.props?.table).find(t => typeof t?.getRowModel === 'function');
+    if (!table) return null;
+    const keys = new Set(path.map(v => v.key).filter(k => typeof k === 'string'));
+    const record = table.getRowModel().rows.find(r => keys.has(r.id));
+    const id = record?.original?.ref?.id;
+    if (!isUserId(id) || !record.id.startsWith(id + ':')) return null;
+    return { userId: id, displayName: String(record.original.ref.displayName || id) };
+}
+export function mountUserMenus(w, { actions, selected, account, report }) {
+    let pending = null, popup = null, disposed = false;
+    const groups = new Set();
+    const clear = () => { pending = null; popup?.remove(); popup = null; for (const group of groups) group.remove(); groups.clear(); };
+    function addActions(parent, person, valid) {
+        const available = actions(); if (!available.length) return;
+        const group = w.document.createElement('div'); group.dataset.communityUserActions = 'true';
+        group.style.cssText = 'border-top:1px solid #718096;padding:4px;margin-top:4px';
+        const title = w.document.createElement('div'); title.textContent = 'Personenlisten · ' + person.displayName; title.style.cssText = 'font-size:12px;padding:5px;max-width:320px;overflow-wrap:anywhere'; group.append(title);
+        const status = w.document.createElement('div'); status.setAttribute('role', 'status');
+        for (const action of available) {
+            const button = w.document.createElement('button'); button.type = 'button'; button.setAttribute('role', 'menuitem'); button.textContent = action.label;
+            button.style.cssText = 'display:block;width:100%;text-align:left;font:inherit;color:inherit;background:transparent;border:0;border-radius:4px;padding:8px;cursor:pointer';
+            button.onfocus = () => { button.style.background = '#71809655'; }; button.onblur = () => { button.style.background = 'transparent'; };
+            button.onclick = async event => {
+                event.preventDefault(); event.stopPropagation();
+                if (!valid() || !actions().includes(action)) { status.textContent = 'Auswahl geändert. Bitte Menü erneut öffnen.'; return; }
+                button.disabled = true;
+                try { await action.run({ ...person }); status.textContent = 'Gespeichert.'; }
+                catch (error) { status.textContent = error.message; report(error.message); }
+                finally { button.disabled = false; }
+            };
+            group.append(button);
+        }
+        group.append(status);
+        group.addEventListener('keydown', e => {
+            if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+            const buttons = [...group.querySelectorAll('button')]; const i = buttons.indexOf(w.document.activeElement);
+            e.preventDefault(); e.stopPropagation(); buttons[(i + (e.key === 'ArrowDown' ? 1 : buttons.length - 1)) % buttons.length]?.focus();
+        });
+        parent.append(group); groups.add(group);
+    }
+    function context(event) {
+        clear(); const person = resolvePlayerRow(w, event.target); if (!person || !actions().length) return;
+        event.preventDefault(); event.stopPropagation();
+        const row = event.target.closest('tr'), user = account();
+        popup = w.document.createElement('div'); popup.setAttribute('role', 'menu'); popup.setAttribute('aria-label', 'Personenlisten');
+        popup.dataset.communityPlayerMenu = 'true';
+        popup.style.cssText = 'position:fixed;z-index:2147483647;background:#18232c;color:#fff;border:1px solid #718096;border-radius:8px;padding:4px;max-width:360px;max-height:80vh;overflow:auto;box-shadow:0 6px 24px #0008';
+        w.document.body.append(popup);
+        addActions(popup, person, () => row.isConnected && account() === user && resolvePlayerRow(w, row)?.userId === person.userId);
+        const box = popup.getBoundingClientRect(); popup.style.left = Math.max(0, Math.min(event.clientX, w.innerWidth - box.width)) + 'px'; popup.style.top = Math.max(0, Math.min(event.clientY, w.innerHeight - box.height)) + 'px';
+        popup.querySelector('button')?.focus();
+    }
+    function trigger(event) {
+        if (event.target?.closest?.('[data-community-user-actions],[data-community-player-menu]')) return;
+        if (event.type === 'keydown' && !['Enter', ' ', 'ArrowDown'].includes(event.key)) return;
+        const button = event.target?.closest?.('[aria-haspopup="menu"]');
+        if (event.type === 'keydown' && !button) return;
+        clear(); if (!button) return;
+        const path = vnodePath(w.document.getElementById('root')?._vnode, button);
+        if (!path?.some(v => (v.type?.__name || v.type?.name) === 'UserActionDropdown')) return;
+        const person = selected(); if (!person || !isUserId(person.userId)) return;
+        pending = { button, person, account: account() };
+    }
+    function scan() {
+        if (disposed || !pending) return;
+        const { button, person, account: user } = pending;
+        if (!button.isConnected || selected()?.userId !== person.userId || account() !== user) { clear(); return; }
+        const menuId = button.getAttribute('aria-controls');
+        const menu = menuId ? w.document.getElementById(menuId) : null;
+        if (!menu?.matches('[data-slot="dropdown-menu-content"][data-state="open"]') || menu.querySelector('[data-community-user-actions]')) return;
+        addActions(menu, person, () => menu.isConnected && selected()?.userId === person.userId && account() === user);
+    }
+    function escape(e) { if (e.key === 'Escape') clear(); }
+    const observer = new w.MutationObserver(scan); observer.observe(w.document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-controls', 'data-state'] });
+    w.document.addEventListener('contextmenu', context, true); w.document.addEventListener('pointerdown', trigger, true); w.document.addEventListener('keydown', trigger, true); w.document.addEventListener('keydown', escape, true); w.addEventListener('hashchange', clear);
+    return { dispose() { disposed = true; observer.disconnect(); clear(); w.document.removeEventListener('contextmenu', context, true); w.document.removeEventListener('pointerdown', trigger, true); w.document.removeEventListener('keydown', trigger, true); w.document.removeEventListener('keydown', escape, true); w.removeEventListener('hashchange', clear); } };
+}
 export function createAdapter(w, emit, log) {
     const s = w.$pinia;
     if (!s?.gameLog || typeof s.gameLog.addGameLogEvent !== 'function' || !s.user || !s.game ||

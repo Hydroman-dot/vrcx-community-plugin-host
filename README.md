@@ -9,7 +9,7 @@ An independent community plugin manager and versioned JavaScript API for **VRCX 
 ## What is included
 
 - Plugin installation, updates, enable/disable, removal and settings backup/restore.
-- Manager entry under **Tools** and direct person-marking actions in **Game Log**, using loaded rows with exact user IDs.
+- Manager entry under **Tools** and direct person-marking actions in the **profile menu**, **Playerlist right-click menu** and **Game Log**, using loaded rows with exact user IDs.
 - API v1: live instance/player events, selected user, outgoing blocks, namespaced storage, declarative settings pages, user actions, notifications, approved HTTPS JSON requests and update status.
 - Built-in people alerts: general watchlist, manually entered “blocked me” list, and the current account's own active VRChat blocks.
 - Alerts on other players joining and on your own instance entry as real user IDs appear in live logs; editable notification templates.
@@ -20,7 +20,7 @@ No incoming block information is detected, inferred or bypassed. Lists contain l
 
 ## Install
 
-Use the [1.1.0 installation ZIP](downloads/VRCX-Plugin-Manager-1.1.0-fuer-2026.09.16.zip), extract it, close VRCX completely and run `Installieren.cmd`. Restart VRCX and open **Tools → Plugin-Manager · Community-Plugins**. The floating entry remains on the login screen as a fallback. `Entfernen.cmd` removes the manager while preserving stored lists. Read [the installation guide](ANLEITUNG.md) for existing HTML patches, custom data directories, backups and update behavior.
+Use the [1.2.0 installation ZIP](downloads/VRCX-Plugin-Manager-1.2.0-fuer-2026.09.16.zip), extract it, close VRCX completely and run `Installieren.cmd`. Restart VRCX and open **Tools → Plugin-Manager · Community-Plugins**. The floating entry remains on the login screen as a fallback. `Entfernen.cmd` removes the manager while preserving stored lists. Read [the installation guide](ANLEITUNG.md) for existing HTML patches, custom data directories, backups and update behavior.
 
 The installer modifies only the managed block in your VRCX data directory's `custom.js`, retaining existing code and making backups. It does not reinstall VRCX. Your normal VRCX notification preferences and busy status apply.
 

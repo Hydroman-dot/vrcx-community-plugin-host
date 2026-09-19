@@ -1,6 +1,6 @@
 # Community Plugin API v1
 
-Host 1.1.0, Windows VRCX 2026.09.16. This is an independent community API built on VRCX's existing `custom.js` loader. It is not an upstream-supported stability contract. [Deutsche Schnittstellenbeschreibung](SCHNITTSTELLE-DE.md).
+Host 1.2.0, Windows VRCX 2026.09.16. This is an independent community API built on VRCX's existing `custom.js` loader. It is not an upstream-supported stability contract. [Deutsche Schnittstellenbeschreibung](SCHNITTSTELLE-DE.md).
 
 ## Package and lifecycle
 
@@ -38,7 +38,7 @@ Activation errors stop that plugin. Three event/action errors stop it for the se
 | `await api.storage.set(key,value,scope='local')` | storage | Serialized JSON writes, 2 MB per value, errors propagated. |
 | `api.notifications.send(text)` | notifications | Sends 1–1800 characters through VRCX `External`. Max 25 per plugin per 10 seconds; excess dropped with diagnostics. No delivery guarantee. |
 | `api.ui.page(definition)` | ui | Register/replace a declarative page; see below. |
-| `api.ui.userAction({id,label,run})` | ui | Adds an action for the currently open VRCX profile inside the manager and, since host 1.1.0, the person selected in the Game Log toolbar. `run(person)` receives a snapshot. It does not modify native context-menu components. |
+| `api.ui.userAction({id,label,run})` | ui | Adds an action for the currently open VRCX profile inside the manager and, since host 1.1.0, the person selected in the Game Log toolbar. `run(person)` receives a snapshot. Since host 1.2.0, actions also appear in the profile three-dot menu and a Playerlist row right-click menu. The adapter resolves the exact userId from the keyed live table row, never its display name or row index. A changed account/selection or removed action prevents execution. Native UI integration is specific to the supported VRCX version. |
 | `api.ui.refresh()` | ui | Renders manager again if open. Unsaved field edits are not retained after rerender. |
 | `api.ui.confirm(text)` | ui | Returns confirmation Boolean. |
 | `api.ui.download(filename,jsonValue)` | ui | JSON browser download. |

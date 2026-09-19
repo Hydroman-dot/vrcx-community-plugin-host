@@ -1,4 +1,4 @@
-# VRCX Community-Plugin-Manager 1.1.0
+# VRCX Community-Plugin-Manager 1.2.0
 
 Stand: 19. September 2026. Freigegeben für die Windows-Ausgabe **VRCX 2026.09.16**.
 Dies ist eine unabhängige Community-Erweiterung, kein offizielles VRCX-Plugin-System.
@@ -21,6 +21,10 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Plugin-Manager.ps1 -Mo
 Ein alter Personenlisten-Patch, der die HTML-Oberfläche ersetzt hat, muss zunächst mit seinem passenden Paket entfernt werden. Der Installer stoppt bei dessen Markierungsdatei. **Nach einem VRCX-Update niemals eine alte HTML-Sicherung über die neue Version kopieren.** In diesem Fall die offizielle Installation reparieren und die persönlichen VRCX-Daten behalten. Der neue Manager kann die gespeicherten Listen aus v1/v2/v3 des alten Patches übernehmen.
 
 ## Personen markieren und Meldungen bearbeiten
+
+- **Playerlist:** Rechtsklick auf eine Person → **Warnliste umschalten** oder **Hat mich blockiert (manuell) umschalten**.
+- **Profil:** Profil öffnen → Drei-Punkte-Menü → dieselbe Listen-Aktion auswählen.
+- „Umschalten“ fügt die Person hinzu oder entfernt einen vorhandenen Eintrag. Unter **Tools → Plugin-Manager → Personenlisten** kannst du den Listenstand prüfen.
 
 - Direkt im **Game Log** oben eine Person aus den geladenen Einträgen auswählen und die gewünschte Listen-Aktion anklicken. Name und userId werden gemeinsam angezeigt. Das funktioniert in Tabellen- und Sitzungsansicht; es ist keine Änderung am nativen Rechtsklickmenü.
 - Alternativ das VRCX-Profil öffnen, danach **Tools → Plugin-Manager**. Oben stehen Aktionen für dieses Profil.

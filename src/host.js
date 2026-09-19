@@ -1,5 +1,5 @@
 import { HOST_VERSION, API_VERSION, SUPPORTED_VRCX, PERMISSIONS, copy, validatePackage, serializedRepository } from './core.js';
-import { createAdapter, createUpdateGate, mountVrcxNavigation } from './adapter.js';
+import { createAdapter, createUpdateGate, mountVrcxNavigation, mountUserMenus } from './adapter.js';
 import { peopleManifest, peoplePlugin } from './people.js';
 export async function startHost(w = window) {
     if (w.VRCXCommunityHost) return;
@@ -9,7 +9,7 @@ export async function startHost(w = window) {
     settings.plugins ||= {}; settings.origins ||= {};
     const save = () => repository.set(key, settings);
     const logs = [], active = new Map(), pages = new Map(), userActions = new Map(), events = new Map();
-    let adapter, gate, navigation, disposed = false, selectedPage = '', renderUI = () => {};
+    let adapter, gate, navigation, userMenus, disposed = false, selectedPage = '', renderUI = () => {};
     const log = message => { logs.unshift(new Date().toLocaleTimeString() + ' · ' + String(message).slice(0, 500)); logs.length = Math.min(logs.length, 80); };
     const version = String(await w.AppApi.GetVersion()).trim().replace(/^VRCX /, '');
     const compatible = SUPPORTED_VRCX.includes(version);
@@ -214,7 +214,7 @@ export async function startHost(w = window) {
     };
     const publicHost = { version: HOST_VERSION, apiVersion: API_VERSION, vrcxVersion: version,
         status: () => ({ compatible, updateHeld: Boolean(gate?.held), active: [...active.keys()], logs: [...logs] }),
-        dispose() { disposed = true; navigation?.dispose(); for (const id of [...active.keys()]) stop(id); adapter?.dispose(); gate?.dispose(); container.remove(); delete w.VRCXCommunityHost; } };
+        dispose() { disposed = true; userMenus?.dispose(); navigation?.dispose(); for (const id of [...active.keys()]) stop(id); adapter?.dispose(); gate?.dispose(); container.remove(); delete w.VRCXCommunityHost; } };
     w.VRCXCommunityHost = publicHost;
     await start(peopleManifest.id);
     for (const id of Object.keys(settings.plugins)) if (id !== peopleManifest.id && settings.plugins[id].package) {
@@ -224,5 +224,6 @@ export async function startHost(w = window) {
         open(page = '') { selectedPage = page; panel.hidden = false; renderUI(); },
         actions: () => [...userActions.values()], report: log, logPeople: () => adapter?.gameLogPeople() || [], fallback: launcher
     });
+    if (adapter) userMenus = mountUserMenus(w, { actions: () => [...userActions.values()], selected: adapter.selected, account: adapter.account, report: log });
     return publicHost;
 }

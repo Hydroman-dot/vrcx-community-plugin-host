@@ -1,12 +1,13 @@
 # VRCX-Plugin-Schnittstelle: Funktionen, Daten, Import und Export
 
-**Stand: Host 1.1.0 / API v1, für VRCX 2026.09.16 unter Windows.**
+**Stand: Host 1.2.0 / API v1, für VRCX 2026.09.16 unter Windows.**
 
 Diese Datei richtet sich an Entwickler eigener Plugins. Die Erweiterung ist unabhängig von VRCX und nutzt dessen vorhandenen `custom.js`-Ladeweg. Sie verändert weder den VRChat-Client noch die VRCX-Programmdateien. [Englische API-Referenz](API.md) · [Installationsanleitung](ANLEITUNG.md) · [Beispiel-Plugin](examples/hello-plugin.json).
 
 ## Wo die Oberfläche sitzt
 
 - **Tools → Plugin-Manager · Community-Plugins** öffnet Verwaltung, Personenlisten und Meldungseinstellungen.
+- Seit Host 1.2.0: Direkt im **Profil-Drei-Punkte-Menü** und per **Rechtsklick in der Playerlist** markieren. Der Adapter verwendet die userId der tatsächlichen Tabellenzeile; bei nicht eindeutig auflösbarer Auswahl erscheint keine Aktion.
 - Im **Game Log** erscheint oben eine Auswahl der Personen aus den geladenen Einträgen. Name und userId werden zusammen angezeigt. Die Aktionen „Warnliste umschalten“ und „Hat mich blockiert (manuell) umschalten“ speichern die Markierung direkt, ohne Kopieren einer ID oder Öffnen des Profils.
 - Tabellenansicht und Sitzungsansicht werden unterstützt. Mehrere Einträge derselben userId werden zusammengefasst. Einträge ohne gültige userId werden nicht zur Markierung angeboten. Ein alter Logeintrag ist kein Beweis aktueller Anwesenheit.
 - Am Anmeldebildschirm bzw. als Rückfalleinstieg bleibt der schwebende Button verfügbar. Die Einbindung unter Tools und Game Log ist Teil des versionsabhängigen Adapters.
@@ -58,7 +59,7 @@ Die Ereignisse kommen vom nativen Live-Game-Log-Callback. Alte Datenbankeinträg
 | --- | --- | --- |
 | Meldung | `api.notifications.send(text)` | Bestehender VRCX-Benachrichtigungsweg: VR-Overlay, Desktop und/oder TTS entsprechend den VRCX-Einstellungen. |
 | Einstellungsseite | `api.ui.page(definition)` | Deklarative Felder, Aktionen und Textzeilen im Manager. |
-| Nutzeraktion | `api.ui.userAction({id,label,run})` | Aktion für das geöffnete Profil und für die ausgewählte Game-Log-Person. |
+| Nutzeraktion | `api.ui.userAction({id,label,run})` | Aktion im Profil-Drei-Punkte-Menü, im Playerlist-Rechtsklickmenü, im Manager für das geöffnete Profil und für die ausgewählte Game-Log-Person. |
 | Oberfläche aktualisieren | `api.ui.refresh()` | Eigene Manager-Seite neu rendern; ungespeicherte Feldänderungen werden dabei ersetzt. |
 | Rückfrage | `api.ui.confirm(text)` | Bestätigung vor einer gewünschten Änderung. |
 | JSON-Datei exportieren | `api.ui.download(name,value)` | Lokaler Browserdownload. Kein Upload an andere Personen. |

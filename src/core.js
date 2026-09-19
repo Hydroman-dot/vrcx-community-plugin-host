@@ -1,4 +1,4 @@
-export const HOST_VERSION = '1.1.0';
+export const HOST_VERSION = '1.2.0';
 export const API_VERSION = 1;
 export const SUPPORTED_VRCX = ['2026.09.16'];
 export const isUserId = id => typeof id === 'string' && /^usr_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);

@@ -1,5 +1,5 @@
 import { normalizePeople, validateList, isUserId, formatTemplate } from './core.js';
-export const peopleManifest = { id: 'people-alerts', name: 'Personenlisten', version: '1.1.0', apiVersion: 1,
+export const peopleManifest = { id: 'people-alerts', name: 'Personenlisten', version: '1.2.0', apiVersion: 1,
     vrcxVersions: ['2026.09.16'], permissions: ['events', 'users', 'blocks', 'storage', 'notifications', 'ui', 'network'] };
 export async function peoplePlugin(api) {
     let data = normalizePeople(await api.storage.get('lists', null) || await api.storage.legacyPeople() || {});
