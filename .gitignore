@@ -1,0 +1,11 @@
+node_modules/
+dist/
+installer-test-*/
+coverage/
+*.log
+*.sqlite3*
+.env
+.env.*
+custom.js
+.DS_Store
+Thumbs.db

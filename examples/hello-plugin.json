@@ -1,0 +1,11 @@
+{
+  "manifest": {
+    "id": "hello-instance",
+    "name": "Instanz-Beispiel",
+    "version": "1.0.0",
+    "apiVersion": 1,
+    "vrcxVersions": ["2026.09.16"],
+    "permissions": ["events", "ui"]
+  },
+  "code": "let text = 'Warte auf deinen nächsten Instanzbeitritt.'; api.events.on('instance.entered', event => { text = 'Instanz: ' + event.location; api.ui.refresh(); }); api.ui.page({ id: 'status', title: 'Instanz-Beispiel', render: () => ({ description: text }), onAction: async () => {} });"
+}

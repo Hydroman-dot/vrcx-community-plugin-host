@@ -1,0 +1,11 @@
+{
+  "manifest": {
+    "id": "game-log-export",
+    "name": "Game-Log-Personen exportieren",
+    "version": "1.0.0",
+    "apiVersion": 1,
+    "vrcxVersions": ["2026.09.16"],
+    "permissions": ["gamelog", "ui"]
+  },
+  "code": "api.ui.page({id:'export',title:'Game-Log-Export',render:()=>({description:'Exportiert Personen aus den aktuell geladenen Logeinträgen, nicht den gesamten Verlauf.',actions:[{id:'export',label:'JSON herunterladen'}]}),onAction:async action=>{if(action==='export')api.ui.download('game-log-personen.json',api.gameLog.people());}});"
+}
