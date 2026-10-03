@@ -1,15 +1,16 @@
-export const HOST_VERSION = '1.2.0';
+export const HOST_VERSION = '1.3.0';
 export const API_VERSION = 1;
 export const SUPPORTED_VRCX = ['2026.09.16'];
 export const isUserId = id => typeof id === 'string' && /^usr_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 export const copy = value => JSON.parse(JSON.stringify(value));
-export const PERMISSIONS = ['events', 'users', 'blocks', 'storage', 'notifications', 'ui', 'network', 'updates', 'gamelog'];
+export const PERMISSIONS = ['events', 'users', 'blocks', 'storage', 'notifications', 'ui', 'network', 'lan', 'updates', 'gamelog'];
 export function validatePackage(pkg) {
     const m = pkg?.manifest;
     if (!m || !/^[a-z][a-z0-9-]{2,63}$/.test(m.id) || !/^\d+\.\d+\.\d+$/.test(m.version) || m.apiVersion !== API_VERSION ||
         typeof m.name !== 'string' || !m.name.trim() || m.name.length > 100 ||
         !Array.isArray(m.permissions) || m.permissions.some(p => !PERMISSIONS.includes(p)) ||
-        !Array.isArray(m.vrcxVersions) || !m.vrcxVersions.length || m.vrcxVersions.some(v => !/^\d{4}\.\d{2}\.\d{2}$/.test(v)) ||
+        (m.hostApiOnly !== true && (!Array.isArray(m.vrcxVersions) || !m.vrcxVersions.length)) ||
+        (m.vrcxVersions !== undefined && (!Array.isArray(m.vrcxVersions) || m.vrcxVersions.some(v => !/^\d{4}\.\d{2}\.\d{2}$/.test(v))) ||
         typeof pkg.code !== 'string' || pkg.code.length > 500000) throw Error('Ungültiges Plugin-Paket oder nicht unterstützte API.');
     return copy(pkg);
 }

@@ -26,7 +26,7 @@ export async function startHost(w = window) {
         for (const [k, a] of userActions) if (a.owner === id) userActions.delete(k);
     }
     async function run(manifest, activate) {
-        if (!adapter || !gate?.held || !manifest.vrcxVersions.includes(version) || settings.plugins[manifest.id]?.enabled === false) return;
+        if (!adapter || !gate?.held || (manifest.hostApiOnly !== true && !manifest.vrcxVersions.includes(version)) || settings.plugins[manifest.id]?.enabled === false) return;
         const state = { cleanup: [], errors: 0, stopped: false }; active.set(manifest.id, state);
         const ensure = permission => { if (state.stopped || disposed) throw Error('Plugin ist beendet.'); if (!manifest.permissions.includes(permission)) throw Error('Fehlende Berechtigung: ' + permission); };
         function safe(fn) { return async (...args) => {
@@ -83,6 +83,35 @@ export async function startHost(w = window) {
                     text += decoder.decode(); ensure('network'); return JSON.parse(text);
                 } finally { w.clearTimeout(timer); }
             } }),
+            lan: Object.freeze({ async json(address, options = {}) {
+                ensure('lan'); const url = new URL(address);
+                const host = url.hostname.toLowerCase();
+                const privateIpv4 = /^(10\.|127\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host);
+                const localName = host === 'localhost' || host.endsWith('.local');
+                if (url.protocol !== 'http:' || url.username || url.password || (!privateIpv4 && !localName)) throw Error('LAN-Zugriff nur per HTTP auf localhost, .local oder private IPv4-Adressen.');
+                const method = String(options.method || 'GET').toUpperCase();
+                if (!['GET', 'POST'].includes(method)) throw Error('LAN-Zugriff unterstützt nur GET und POST.');
+                const grant = 'lan:' + manifest.id + ':' + url.origin;
+                if (!settings.origins[grant]) {
+                    if (!w.confirm(`${manifest.name} möchte im lokalen Netzwerk auf ${url.origin} zugreifen. Zugriff auf diese Herkunft erlauben?`)) throw Error('LAN-Zugriff abgelehnt.');
+                    settings.origins[grant] = true; await save();
+                }
+                const headers = { 'Accept': 'application/json' };
+                if (options.token) headers.Authorization = 'Bearer ' + String(options.token).slice(0, 512);
+                let body;
+                if (method === 'POST') { headers['Content-Type'] = 'application/json'; body = JSON.stringify(options.body ?? {}); if (body.length > 1000000) throw Error('LAN-Anfrage größer als 1 MB.'); }
+                const controller = new AbortController(); const timer = w.setTimeout(() => controller.abort(), 15000);
+                state.cleanup.push(() => controller.abort());
+                try {
+                    const response = await w.fetch(url.href, { method, headers, body, credentials: 'omit', redirect: 'error', signal: controller.signal, referrerPolicy: 'no-referrer' });
+                    if (!response.ok) throw Error('HTTP ' + response.status);
+                    const reader = response.body.getReader(); let size = 0, text = ''; const decoder = new TextDecoder();
+                    while (true) { const { done, value } = await reader.read(); if (done) break; size += value.byteLength;
+                        if (size > 5000000) { await reader.cancel(); throw Error('LAN-Antwort größer als 5 MB.'); } text += decoder.decode(value, { stream: true }); }
+                    text += decoder.decode(); ensure('lan'); return JSON.parse(text);
+                } finally { w.clearTimeout(timer); }
+            } }),
+
             lifecycle: Object.freeze({ onDispose(fn) { if (typeof fn !== 'function') throw Error('Funktion erwartet.'); state.cleanup.push(fn); } }),
             log: message => log(manifest.name + ': ' + message)
         });
@@ -157,7 +186,7 @@ export async function startHost(w = window) {
         input.onchange = async () => {
             try { const file = input.files?.[0]; if (!file) return; if (file.size > 1000000) throw Error('Plugin-Paket zu groß.');
                 const pkg = validatePackage(JSON.parse(await file.text())); if (pkg.manifest.id === peopleManifest.id) throw Error('Das eingebaute Plugin wird mit dem Manager aktualisiert.');
-                if (!pkg.manifest.vrcxVersions.includes(version)) throw Error('Plugin unterstützt diese VRCX-Version nicht.');
+                if (pkg.manifest.hostApiOnly !== true && !pkg.manifest.vrcxVersions.includes(version)) throw Error('Plugin unterstützt diese VRCX-Version nicht.');
                 const m = pkg.manifest;
                 if (!w.confirm(`${m.name} ${m.version}\nBerechtigungen: ${m.permissions.join(', ')}\n\nVertrauenswürdigen Code installieren? Der Code hat technisch Zugriff auf deine VRCX-Sitzung.`)) return;
                 const previous = settings.plugins[m.id]; settings.plugins[m.id] = { enabled: true, package: pkg };
