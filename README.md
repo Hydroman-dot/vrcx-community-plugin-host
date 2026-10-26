@@ -75,3 +75,9 @@ The dependency is development-only (`jsdom`); the shipped manager has no externa
 - No VR headset end-to-end verification yet. Local tests and an isolated native VRCX startup passed.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for proposed API changes, compatibility testing and pull requests. The project is licensed under [MIT](LICENSE), so others can build plugins, fork the host and contribute improvements. VRCX and VRChat are separate projects; this repository is not affiliated with their teams.
+
+## KI-Hinweis / AI disclosure
+
+Dieses Projekt wird mit Unterstützung künstlicher Intelligenz entwickelt und dokumentiert. Der Hinweis beschreibt die Entwicklung und bedeutet nicht, dass das Programm selbst KI-Funktionen verwendet.
+
+This project is developed and documented with assistance from artificial intelligence. This disclosure describes the development process; it does not imply that the software itself uses AI features.
