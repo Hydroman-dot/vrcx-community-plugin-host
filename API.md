@@ -1,6 +1,6 @@
 # Community Plugin API v1
 
-Host 1.2.0, Windows VRCX 2026.09.16. This is an independent community API built on VRCX's existing `custom.js` loader. It is not an upstream-supported stability contract. [Deutsche Schnittstellenbeschreibung](SCHNITTSTELLE-DE.md).
+Host 1.3.0, Windows VRCX 2026.09.16. This is an independent community API built on VRCX's existing `custom.js` loader. It is not an upstream-supported stability contract. [Deutsche Schnittstellenbeschreibung](SCHNITTSTELLE-DE.md).
 
 ## Package and lifecycle
 
@@ -17,7 +17,7 @@ A JSON package has `manifest` and `code`. See `examples/hello-plugin.json`. Requ
 }
 ```
 
-IDs: 3–64 lowercase letters/digits/hyphens, starting with a letter. Versions: three numeric components. Supported VRCX versions are explicit exact release dates, not inferred ranges. Unknown API majors, permissions and incompatible releases are rejected. API v1 is the shared contract; implementation details of `$pinia` are not part of it.
+IDs: 3–64 lowercase letters/digits/hyphens, starting with a letter. Versions: three numeric components. Plugins that use only the public host API may set `hostApiOnly:true` and omit `vrcxVersions`; they then follow the API compatibility gate of the host instead of individual VRCX releases. Legacy/version-coupled plugins may still list exact `vrcxVersions`. Unknown API majors, permissions and incompatible releases are rejected. API v1 is the shared contract; implementation details of `$pinia` are not part of it.
 
 `code` is the body of an async activation function receiving `api`. It runs once on activation. It may return a synchronous cleanup function. Also use `api.lifecycle.onDispose(fn)`. Cleanups run in reverse registration order on disable/remove/update. The host unregisters API events, pages and user actions; a plugin must clean up its own timers/resources. API methods reject calls after deactivation. Storage operations already queued may complete. Packages execute trusted local JavaScript in the page: this is **not a sandbox**. Do not access VRCX globals directly or retain state after disposal.
 
@@ -42,7 +42,7 @@ Activation errors stop that plugin. Three event/action errors stop it for the se
 | `api.ui.refresh()` | ui | Renders manager again if open. Unsaved field edits are not retained after rerender. |
 | `api.ui.confirm(text)` | ui | Returns confirmation Boolean. |
 | `api.ui.download(filename,jsonValue)` | ui | JSON browser download. |
-| `await api.network.json(httpsUrl)` | network | User-approved origin; no cookies, no redirects, 15 s timeout, 2 MB maximum streamed body, JSON response. Grants are per plugin and origin. Host can revoke grants. |
+| `await api.network.json(httpsUrl)` | network | User-approved public HTTPS origin; no cookies, no redirects, 15 s timeout, 2 MB maximum streamed body, JSON response. |\n| `await api.lan.json(httpUrl,{token})` | lan | User-approved private-LAN JSON GET/POST. Only localhost, `.local`, RFC1918/link-local IPv4 over HTTP; bearer token optional; no cookies or redirects. |
 | `api.updates.status()` | updates | `{vrcxVersion,hostVersion,held,supportedVrcxVersions,compatible,automaticInstallation:false}`. Read-only; plugins cannot release host update protection through API v1. |
 | `api.lifecycle.onDispose(fn)` | none | Register synchronous cleanup. |
 | `api.log(text)` | none | Prefixes plugin name in host session diagnostics. |

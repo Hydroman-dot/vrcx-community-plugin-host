@@ -1,6 +1,6 @@
 # VRCX-Plugin-Schnittstelle: Funktionen, Daten, Import und Export
 
-**Stand: Host 1.2.0 / API v1, für VRCX 2026.09.16 unter Windows.**
+**Stand: Host 1.3.0 / API v1, für VRCX 2026.09.16 unter Windows.**
 
 Diese Datei richtet sich an Entwickler eigener Plugins. Die Erweiterung ist unabhängig von VRCX und nutzt dessen vorhandenen `custom.js`-Ladeweg. Sie verändert weder den VRChat-Client noch die VRCX-Programmdateien. [Englische API-Referenz](API.md) · [Installationsanleitung](ANLEITUNG.md) · [Beispiel-Plugin](examples/hello-plugin.json).
 
@@ -151,3 +151,4 @@ Dieser Export betrifft die geladenen Personen, nicht den gesamten VRCX-Logverlau
 Plugins laufen als **vertrauenswürdiger JavaScript-Code im VRCX-Kontext**, ohne Sicherheits-Sandbox. Die API-Prüfungen verhindern kein absichtliches Umgehen über globale Objekte. Nur geprüften Code installieren. Updates auf unbekannte VRCX-Versionen pausieren Plugins; künftige Kompatibilität ist nicht garantiert.
 
 Der Meldungsweg respektiert VRCXs Einstellungen und kann bei „Beschäftigt“ oder noch nicht abgeschlossener Anmeldung unterdrückt werden. Ein echter Headset-Ende-zu-Ende-Test steht noch aus. Ein unbeaufsichtigter gemeinsamer VRCX-/Manager-Updater und ein zentraler Plugin-Marktplatz sind nicht enthalten.
+\n\n## API-gekoppelte Plugins und LAN-Zugriff (Host 1.3.0)\n\nPlugins, die ausschließlich die dokumentierte Community-Host-API verwenden, können im Manifest `hostApiOnly:true` setzen und `vrcxVersions` weglassen. Damit muss das Plugin bei einem normalen VRCX-Update nicht neu veröffentlicht werden; nur der versionsabhängige Host-Adapter muss die neue VRCX-Version freigeben.\n\nFür lokale Begleitdienste gibt es die Berechtigung `lan` und `api.lan.json(...)`. Erlaubt sind nur HTTP-Ziele auf `localhost`, `.local`, privaten IPv4-Netzen oder Link-Local. Die Herkunft wird einmal bestätigt; Cookies und Redirects sind deaktiviert. Ein optionales Bearer-Token kann mitgegeben werden.\n
