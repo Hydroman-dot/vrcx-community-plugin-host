@@ -1,6 +1,6 @@
 # Community Plugin API v1
 
-Host 1.2.0, Windows VRCX 2026.09.16. This is an independent community API built on VRCX's existing `custom.js` loader. It is not an upstream-supported stability contract. [Deutsche Schnittstellenbeschreibung](SCHNITTSTELLE-DE.md).
+Host 1.3.0, Windows VRCX 2026.09.16 and 2026.11.14. This is an independent community API built on VRCX's existing `custom.js` loader. It is not an upstream-supported stability contract. [Deutsche Schnittstellenbeschreibung](SCHNITTSTELLE-DE.md).
 
 ## Package and lifecycle
 
@@ -12,12 +12,11 @@ A JSON package has `manifest` and `code`. See `examples/hello-plugin.json`. Requ
   "name": "My plugin",
   "version": "1.0.0",
   "apiVersion": 1,
-  "vrcxVersions": ["2026.09.16"],
   "permissions": ["events", "users", "storage", "notifications", "ui"]
 }
 ```
 
-IDs: 3–64 lowercase letters/digits/hyphens, starting with a letter. Versions: three numeric components. Supported VRCX versions are explicit exact release dates, not inferred ranges. Unknown API majors, permissions and incompatible releases are rejected. API v1 is the shared contract; implementation details of `$pinia` are not part of it.
+IDs: 3–64 lowercase letters/digits/hyphens, starting with a letter. Versions: three numeric components. Plugin compatibility is defined by `apiVersion` and requested permissions. The legacy `vrcxVersions` field is still accepted and syntax-checked when present, but since host 1.3.0 it is informational and does not gate activation. Exact VRCX compatibility is owned by the host adapter. Unknown API majors and permissions are rejected. API v1 is the shared contract; implementation details of `$pinia`, `$bridge` or private Vue components are not part of it.
 
 `code` is the body of an async activation function receiving `api`. It runs once on activation. It may return a synchronous cleanup function. Also use `api.lifecycle.onDispose(fn)`. Cleanups run in reverse registration order on disable/remove/update. The host unregisters API events, pages and user actions; a plugin must clean up its own timers/resources. API methods reject calls after deactivation. Storage operations already queued may complete. Packages execute trusted local JavaScript in the page: this is **not a sandbox**. Do not access VRCX globals directly or retain state after disposal.
 
@@ -99,14 +98,14 @@ Host settings: `VRCX_CommunityHost_v1`. ConfigRepository lowercases underlying k
 
 ## Adapter and upstream source map
 
-Reviewed upstream: [tag v2026.09.16](https://github.com/vrcx-team/VRCX/tree/v2026.09.16), commit `1bf052f84c670b96bfe44156e097eb668ae78de7`.
+Reviewed upstream: [tag v2026.09.16](https://github.com/vrcx-team/VRCX/tree/v2026.09.16), commit `1bf052f84c670b96bfe44156e097eb668ae78de7`, and [tag v2026.11.14](https://github.com/vrcx-team/VRCX/tree/v2026.11.14), commit `20fe6963f0b7acb164c3c6dc4b09ff025fe3caeb`.
 
 | Upstream file | Integration point |
 | --- | --- |
-| `Dotnet/AppApi/Common/AppApiCommon.cs` | `CustomScript()` reads user data directory/custom.js. `GetVersion()` returns `VRCX 2026.09.16`, including prefix. |
+| `Dotnet/AppApi/Common/AppApiCommon.cs` | `CustomScript()` reads user data directory/custom.js. `GetVersion()` returns the current `VRCX <version>` string, including prefix. |
 | `src/shared/utils/base/ui.js` | `refreshCustomScript()` injects existing custom.js. |
 | `src/stores/vrcx.js` | Calls script loader after database initialization. |
-| `src/App.vue`, `src/stores/index.js` | Create and expose `window.$pinia`; coordinator assigned to gameLog store. |
+| `src/App.vue`, `src/stores/index.js` | Create and expose `window.$pinia`. VRCX 2026.09.16 attaches `addGameLogEvent` to `store.gameLog`; VRCX 2026.11.14 exposes it through `window.$bridge`. The adapter supports both ingress points. |
 | `src/coordinators/gameLogCoordinator.js` | Live `addGameLogEvent(json)` bridge. Original handler always runs first. |
 | `src/services/gameLog.js`, `Dotnet/LogWatcher.cs` | Raw array `[recordId,dt,type,...args]`; location and player-joined/left arguments. |
 | `src/stores/user.js`, `src/stores/moderation.js` | Current/open-profile user and outgoing moderation cache. |

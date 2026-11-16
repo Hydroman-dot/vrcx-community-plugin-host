@@ -1,6 +1,6 @@
-# VRCX Community-Plugin-Manager 1.2.0
+# VRCX Community-Plugin-Manager 1.3.0
 
-Stand: 19. September 2026. Freigegeben für die Windows-Ausgabe **VRCX 2026.09.16**.
+Stand: 16. November 2026. Freigegeben für die Windows-Ausgaben **VRCX 2026.09.16** und **VRCX 2026.11.14**.
 Dies ist eine unabhängige Community-Erweiterung, kein offizielles VRCX-Plugin-System.
 
 ## Installation
@@ -65,6 +65,8 @@ In **Plugin-Verwaltung** ein JSON-Paket auswählen. Name, Version und beantragte
 
 `examples/hello-plugin.json` ist ein lauffähiges kleines Beispiel. `API.md` beschreibt die gemeinsame API für dich und deine Freunde.
 
+Seit Host 1.3.0 werden Plugins über `apiVersion` an die Community-Schnittstelle gebunden, **nicht** an einzelne VRCX-Versionen. Das alte Manifest-Feld `vrcxVersions` wird aus Kompatibilitätsgründen weiterhin akzeptiert, aber nicht mehr zur Laufzeitfreigabe verwendet. Dadurch genügt bei einem reinen VRCX-Update normalerweise ein neuer geprüfter Host-Adapter; korrekt geschriebene Plugins müssen nicht neu veröffentlicht werden.
+
 `SCHNITTSTELLE-DE.md` beschreibt auf Deutsch alle verfügbaren Daten, Berechtigungen, Import-/Exportformate und Beispiele. `examples/game-log-export.json` zeigt den Export der Personen aus geladenen Logeinträgen. Die neue Game-Log-/Tools-Einbindung wurde anhand des aktuellen Quellcodes und mit DOM-Tests geprüft; ein interaktiver Test in einem angemeldeten VRCX steht noch aus.
 
 **Nur vertrauenswürdige Plugins installieren.** Plugins laufen im JavaScript-Kontext von VRCX und könnten technisch auf dessen Sitzung zugreifen. Die API-Berechtigungen sind Kontrollen für korrekt geschriebene Plugins, keine technische Sandbox. Endlosschleifen oder absichtlich umgangene API-Regeln lassen sich damit nicht isolieren. Es gibt weder einen geprüften Plugin-Marktplatz noch digitale Herausgebersignaturen. Die Paket-Prüfsumme erkennt Übertragungsfehler, nicht einen böswilligen Herausgeber.
@@ -73,7 +75,7 @@ In **Plugin-Verwaltung** ein JSON-Paket auswählen. Name, Version und beantragte
 
 Der Manager hält VRCXs automatische Updates an, indem er die Einstellung auf `Off` setzt und nach seinem Start native Download- und Upgrade-Neustartaufrufe sperrt. VRCX lädt `custom.js` erst nach einem Teil seiner Initialisierung: Beim allerersten Start kann eine zuvor aktivierte Update-Prüfung/ein Download schon angelaufen sein. Der Schutz ist keine systemweite Sperre gegen externe Installer, fremde Skripte oder VRCX-Versionen mit geänderten nativen Updatewegen.
 
-**Offizielle VRCX-Version prüfen** liest die neueste stabile GitHub-Veröffentlichung. Es installiert nichts. Nur VRCX 2026.09.16 ist für diesen Manager freigegeben. Unbekannte Versionen starten keine Plugins; ein funktionsfähiger Update-Schutz und das Verwaltungsmenü bleiben nach Möglichkeit verfügbar.
+**Offizielle VRCX-Version prüfen** liest die neueste stabile GitHub-Veröffentlichung. Es installiert nichts. Host 1.3.0 gibt VRCX 2026.09.16 und 2026.11.14 frei. Unbekannte Versionen starten den versionsabhängigen Host-Adapter nicht; Plugins hängen nur von der Community-API ab und müssen bei einem reinen Adapterupdate nicht einzeln freigegeben werden.
 
 Der sinnvolle Ablauf ist jetzt:
 
@@ -100,6 +102,7 @@ Zum Entfernen VRCX schließen und **Entfernen.cmd** starten. Eigener Code bleibt
 - Automatisierte Tests: Live-Join/Leave, eigener Instanzwechsel, doppelte und alte Ereignisse, Kontowechsel, Datenmigration, Meldungstexte, geteilte Listen, Speicherfehler, Plugin-Lebenszyklus, API-Prüfung und Update-Sperre.
 - Oberfläche mit einer Test-VRCX-Umgebung geprüft; Installation, wiederholte Installation und Entfernung in echten separaten Windows-Testordnern geprüft, einschließlich Erhalt vorhandener Skripte, beschädigter Pakete, unbekannter Version und Verzeichnisverknüpfungen.
 - Echter Start der installierten VRCX-Version 2026.09.16 mit separatem leeren Datenordner: Manager aktiv, Personenlisten-Plugin aktiv, Update-Schutz aktiv, Personenlisten-Menü mit acht Eingabefeldern vorhanden.
+- VRCX 2026.11.14: Quellcode-Kompatibilität des neuen `window.$bridge.addGameLogEvent`-Einstiegs, UI-Anker und Windows-Installer-Freigabe automatisiert abgedeckt. Ein echter Desktop-/VR-Ende-zu-Ende-Test dieser Version steht noch aus.
 - Noch kein echter VRChat-/SteamVR-Ende-zu-Ende-Test. Im isolierten Testprofil fehlen Anmeldung und nutzbare Overlay-Verbindung; Netzwerkzugriffe waren in der Testumgebung eingeschränkt. Die sichtbare Meldung im Headset muss nach Installation vor Ort geprüft werden.
 
-Offizieller überprüfter Quellstand: [v2026.09.16](https://github.com/vrcx-team/VRCX/tree/v2026.09.16), Commit `1bf052f84c670b96bfe44156e097eb668ae78de7`.
+Offiziell überprüfte Quellstände: [v2026.09.16](https://github.com/vrcx-team/VRCX/tree/v2026.09.16), Commit `1bf052f84c670b96bfe44156e097eb668ae78de7`, und [v2026.11.14](https://github.com/vrcx-team/VRCX/tree/v2026.11.14), Commit `20fe6963f0b7acb164c3c6dc4b09ff025fe3caeb`.

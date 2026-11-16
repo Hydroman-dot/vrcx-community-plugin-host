@@ -110,22 +110,37 @@ export function mountUserMenus(w, { actions, selected, account, report }) {
 }
 export function createAdapter(w, emit, log) {
     const s = w.$pinia;
-    if (!s?.gameLog || typeof s.gameLog.addGameLogEvent !== 'function' || !s.user || !s.game ||
+    if (!s?.gameLog || !s.user || !s.game ||
         typeof s.notification?.playNoty !== 'function' || typeof w.configRepository?.setString !== 'function') throw Error('VRCX-Schnittstelle fehlt. Erweiterungen bleiben ausgeschaltet.');
+    const logTargets = [...new Set([
+        typeof w.$bridge?.addGameLogEvent === 'function' ? w.$bridge : null,
+        typeof s.gameLog.addGameLogEvent === 'function' ? s.gameLog : null
+    ].filter(Boolean))];
+    if (!logTargets.length) throw Error('VRCX-Game-Log-Schnittstelle fehlt. Erweiterungen bleiben ausgeschaltet.');
     const presence = new Presence(emit);
-    const original = s.gameLog.addGameLogEvent;
     let account = s.user.currentUser?.id || '';
-    function live(raw) {
-        const result = original.apply(this, arguments);
-        try { syncAccount(); presence.accept(JSON.parse(raw), account, s.game.isGameRunning); }
-        catch (error) { log('Log-Ereignis verworfen: ' + error.message); }
-        return result;
-    }
-    s.gameLog.addGameLogEvent = live;
     function syncAccount() {
         const id = s.user.currentUser?.id || '';
         if (id !== account) { account = id; presence.reset(); emit('account.changed', { userId: isUserId(id) ? id : '' }); }
         if (!s.game.isGameRunning && presence.location) { presence.reset(); emit('instance.left', {}); }
+    }
+    const hooks = [];
+    try {
+        for (const target of logTargets) {
+            const original = target.addGameLogEvent;
+            function live(raw) {
+                const result = original.apply(this, arguments);
+                try { syncAccount(); presence.accept(JSON.parse(raw), account, s.game.isGameRunning); }
+                catch (error) { log('Log-Ereignis verworfen: ' + error.message); }
+                return result;
+            }
+            target.addGameLogEvent = live;
+            if (target.addGameLogEvent !== live) throw Error('VRCX-Game-Log-Schnittstelle ist nicht beschreibbar.');
+            hooks.push({ target, original, live });
+        }
+    } catch (error) {
+        for (const hook of hooks.reverse()) if (hook.target.addGameLogEvent === hook.live) hook.target.addGameLogEvent = hook.original;
+        throw error;
     }
     const timer = w.setInterval(syncAccount, 1000);
     return {
@@ -137,7 +152,10 @@ export function createAdapter(w, emit, log) {
         snapshot: () => presence.snapshot(),
         gameLogPeople: () => gameLogPeople(s.gameLog),
         notify: message => s.notification.playNoty({ type: 'External', message, created_at: new Date().toISOString() }),
-        dispose: () => { w.clearInterval(timer); if (s.gameLog.addGameLogEvent === live) s.gameLog.addGameLogEvent = original; }
+        dispose: () => {
+            w.clearInterval(timer);
+            for (const hook of hooks.reverse()) if (hook.target.addGameLogEvent === hook.live) hook.target.addGameLogEvent = hook.original;
+        }
     };
 }
 

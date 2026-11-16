@@ -1,6 +1,6 @@
 # VRCX-Plugin-Schnittstelle: Funktionen, Daten, Import und Export
 
-**Stand: Host 1.2.0 / API v1, für VRCX 2026.09.16 unter Windows.**
+**Stand: Host 1.3.0 / API v1, für VRCX 2026.09.16 und 2026.11.14 unter Windows.**
 
 Diese Datei richtet sich an Entwickler eigener Plugins. Die Erweiterung ist unabhängig von VRCX und nutzt dessen vorhandenen `custom.js`-Ladeweg. Sie verändert weder den VRChat-Client noch die VRCX-Programmdateien. [Englische API-Referenz](API.md) · [Installationsanleitung](ANLEITUNG.md) · [Beispiel-Plugin](examples/hello-plugin.json).
 
@@ -126,7 +126,7 @@ Keine HTTP-Upload-/POST-Funktion gehört zu API v1. `api.network.json` liest nur
 
 ## Berechtigungen und Beispiel
 
-Mögliche Manifest-Berechtigungen: `events`, `users`, `blocks`, `gamelog`, `storage`, `notifications`, `ui`, `network`, `updates`. `gamelog` wird für `api.gameLog.people()` benötigt; `blocks` für eigene Blocks. Fehlende Berechtigungen führen zu Fehlern.
+Mögliche Manifest-Berechtigungen: `events`, `users`, `blocks`, `gamelog`, `storage`, `notifications`, `ui`, `network`, `updates`. `gamelog` wird für `api.gameLog.people()` benötigt; `blocks` für eigene Blocks. Fehlende Berechtigungen führen zu Fehlern. Seit Host 1.3.0 ist `apiVersion` die Plugin-Kompatibilitätsgrenze; ein altes `vrcxVersions`-Feld darf vorhanden sein, ist aber nur noch informativ.
 
 ```json
 {
@@ -135,7 +135,6 @@ Mögliche Manifest-Berechtigungen: `events`, `users`, `blocks`, `gamelog`, `stor
     "name": "Game-Log-Export",
     "version": "1.0.0",
     "apiVersion": 1,
-    "vrcxVersions": ["2026.09.16"],
     "permissions": ["gamelog", "ui"]
   },
   "code": "api.ui.page({id:'export',title:'Game-Log-Export',render:()=>({description:'Exportiert Personen aus den aktuell geladenen Logeinträgen.',actions:[{id:'export',label:'JSON herunterladen'}]}),onAction:async action=>{if(action==='export')api.ui.download('game-log-personen.json',api.gameLog.people());}});"
@@ -148,6 +147,6 @@ Dieser Export betrifft die geladenen Personen, nicht den gesamten VRCX-Logverlau
 
 `code` ist der Körper einer asynchronen Aktivierungsfunktion mit Parameter `api`. Für eigene Ressourcen `api.lifecycle.onDispose(fn)` nutzen oder eine Aufräumfunktion zurückgeben. Eigene Timer müssen bereinigt werden. Drei Fehler in Ereignissen/Aktionen pausieren das Plugin für diese Sitzung.
 
-Plugins laufen als **vertrauenswürdiger JavaScript-Code im VRCX-Kontext**, ohne Sicherheits-Sandbox. Die API-Prüfungen verhindern kein absichtliches Umgehen über globale Objekte. Nur geprüften Code installieren. Updates auf unbekannte VRCX-Versionen pausieren Plugins; künftige Kompatibilität ist nicht garantiert.
+Plugins laufen als **vertrauenswürdiger JavaScript-Code im VRCX-Kontext**, ohne Sicherheits-Sandbox. Die API-Prüfungen verhindern kein absichtliches Umgehen über globale Objekte. Nur geprüften Code installieren. Bei unbekannten VRCX-Versionen startet der Host-Adapter nicht; API-konforme Plugins benötigen bei einem reinen Adapterupdate keine eigene Versionsfreigabe.
 
 Der Meldungsweg respektiert VRCXs Einstellungen und kann bei „Beschäftigt“ oder noch nicht abgeschlossener Anmeldung unterdrückt werden. Ein echter Headset-Ende-zu-Ende-Test steht noch aus. Ein unbeaufsichtigter gemeinsamer VRCX-/Manager-Updater und ein zentraler Plugin-Marktplatz sind nicht enthalten.
