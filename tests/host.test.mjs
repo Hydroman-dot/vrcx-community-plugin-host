@@ -12,13 +12,16 @@ async function setup(version = '2026.09.16', initial = {}) {
     w.confirm = () => true;
     w.configRepository = { getString: async (k, fallback) => db.get(k) ?? fallback, setString: async (k, v) => { db.set(k, v); } };
     w.AppApi = { GetVersion: async () => 'VRCX ' + version, DownloadUpdate: () => {}, RestartApplication: () => {} };
+    const logIngress = () => {};
     w.$pinia = { user: { currentUser: { id: me }, userDialog: { visible: true, id: person, ref: { displayName: '<img src=x onerror=alert(1)>' } } },
-        gameLog: { addGameLogEvent() {} }, game: { isGameRunning: true }, moderation: { cachedPlayerModerations: new Map() },
+        gameLog: {}, game: { isGameRunning: true }, moderation: { cachedPlayerModerations: new Map() },
         notification: { playNoty: noty => { sent.push(noty); } }, vrcxUpdater: { setAutoUpdateVRCX: async value => w.configRepository.setString('VRCX_autoUpdateVRCX', value) } };
+    if (version === '2026.11.14') w.$bridge = { addGameLogEvent: logIngress };
+    else w.$pinia.gameLog.addGameLogEvent = logIngress;
     const host = await startHost(w), root = w.document.querySelector('#vrcx-community-host').shadowRoot;
     const flush = () => new Promise(resolve => setTimeout(resolve, 15));
     const click = async text => { const b = [...root.querySelectorAll('button')].find(e => e.textContent === text); assert.ok(b, text); b.click(); await flush(); };
-    const raw = (type, ...args) => w.$pinia.gameLog.addGameLogEvent(JSON.stringify([0, new Date().toISOString(), type, ...args]));
+    const raw = (type, ...args) => (w.$bridge?.addGameLogEvent || w.$pinia.gameLog.addGameLogEvent)(JSON.stringify([0, new Date().toISOString(), type, ...args]));
     return { dom, w, host, root, db, sent, click, raw, flush, close: () => { host.dispose(); dom.window.close(); } };
 }
 test('real host UI marks selected profile, survives restart and sends built-in External notification', async () => {
@@ -37,6 +40,18 @@ test('real host UI marks selected profile, survives restart and sends built-in E
         await x.click('Deaktivieren'); assert.deepEqual(x.host.status().active, []);
     } finally { x.close(); }
 });
+test('VRCX 2026.11.14 uses bridge ingress and old plugin VRCX metadata no longer blocks API-compatible plugins', async () => {
+    const pkg = { manifest: { id: 'legacy-version-field', name: 'Legacy field', apiVersion: 1, version: '1.0.0', vrcxVersions: ['2026.09.16'], permissions: ['events'] },
+        code: "api.events.on('player.joined', () => api.log('bridge-event-received'));" };
+    const x = await setup('2026.11.14', { VRCX_CommunityHost_v1: { holdUpdates: true, plugins: { 'legacy-version-field': { enabled: true, package: pkg } }, origins: {} } });
+    try {
+        assert.equal(x.host.status().compatible, true);
+        assert.deepEqual(x.host.status().active, ['people-alerts', 'legacy-version-field']);
+        x.raw('location', 'wrld_bridge:1'); x.raw('player-joined', 'Alice', person); await x.flush();
+        assert.match(x.host.status().logs.join(), /bridge-event-received/);
+    } finally { x.close(); }
+});
+
 test('unknown VRCX is held but plugins never start or intercept live logs', async () => {
     const x = await setup('2026.10.01'); try { assert.equal(x.host.status().compatible, false); assert.deepEqual(x.host.status().active, []);
         assert.throws(() => x.w.AppApi.DownloadUpdate()); await x.click('Plugins · Personenlisten'); assert.match(x.root.textContent, /Plugins pausiert/);
