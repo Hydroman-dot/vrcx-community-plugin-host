@@ -26,7 +26,7 @@ export async function startHost(w = window) {
         for (const [k, a] of userActions) if (a.owner === id) userActions.delete(k);
     }
     async function run(manifest, activate) {
-        if (!adapter || !gate?.held || !manifest.vrcxVersions.includes(version) || settings.plugins[manifest.id]?.enabled === false) return;
+        if (!adapter || !gate?.held || settings.plugins[manifest.id]?.enabled === false) return;
         const state = { cleanup: [], errors: 0, stopped: false }; active.set(manifest.id, state);
         const ensure = permission => { if (state.stopped || disposed) throw Error('Plugin ist beendet.'); if (!manifest.permissions.includes(permission)) throw Error('Fehlende Berechtigung: ' + permission); };
         function safe(fn) { return async (...args) => {
@@ -157,7 +157,6 @@ export async function startHost(w = window) {
         input.onchange = async () => {
             try { const file = input.files?.[0]; if (!file) return; if (file.size > 1000000) throw Error('Plugin-Paket zu groß.');
                 const pkg = validatePackage(JSON.parse(await file.text())); if (pkg.manifest.id === peopleManifest.id) throw Error('Das eingebaute Plugin wird mit dem Manager aktualisiert.');
-                if (!pkg.manifest.vrcxVersions.includes(version)) throw Error('Plugin unterstützt diese VRCX-Version nicht.');
                 const m = pkg.manifest;
                 if (!w.confirm(`${m.name} ${m.version}\nBerechtigungen: ${m.permissions.join(', ')}\n\nVertrauenswürdigen Code installieren? Der Code hat technisch Zugriff auf deine VRCX-Sitzung.`)) return;
                 const previous = settings.plugins[m.id]; settings.plugins[m.id] = { enabled: true, package: pkg };
@@ -166,7 +165,7 @@ export async function startHost(w = window) {
             } catch (e) { message = e.message; } renderUI();
         };
         el('h3', 'Updates und Wiederherstellung', panel);
-        el('p', 'Der Manager bleibt bei VRCX-Updates im Benutzerordner erhalten. Nur ausdrücklich freigegebene Versionen starten Plugins. Aktuell freigegeben: ' + SUPPORTED_VRCX.join(', ') + '. Eine neue Version benötigt zuerst einen geprüften Manager-Adapter. Externe Installationsprogramme werden nicht blockiert.', panel);
+        el('p', 'Der Manager bleibt bei VRCX-Updates im Benutzerordner erhalten. Nur ausdrücklich freigegebene VRCX-Versionen starten den Host-Adapter. Plugins richten sich nach der Community-API-Version und müssen bei einem reinen VRCX-Adapterupdate nicht neu freigegeben werden. Aktuell freigegeben: ' + SUPPORTED_VRCX.join(', ') + '. Eine neue VRCX-Version benötigt zuerst einen geprüften Manager-Adapter. Externe Installationsprogramme werden nicht blockiert.', panel);
         button(panel, 'Offizielle VRCX-Version prüfen', async () => {
             const controller = new AbortController(), timer = w.setTimeout(() => controller.abort(), 15000);
             try {
