@@ -1,6 +1,6 @@
 import { normalizePeople, validateList, isUserId, formatTemplate } from './core.js';
-export const peopleManifest = { id: 'people-alerts', name: 'Personenlisten', version: '1.2.0', apiVersion: 1,
-    vrcxVersions: ['2026.09.16'], permissions: ['events', 'users', 'blocks', 'storage', 'notifications', 'ui', 'network'] };
+export const peopleManifest = { id: 'people-alerts', name: 'Personenlisten', version: '1.3.0', apiVersion: 1,
+    permissions: ['events', 'users', 'blocks', 'storage', 'notifications', 'ui', 'network'] };
 export async function peoplePlugin(api) {
     let data = normalizePeople(await api.storage.get('lists', null) || await api.storage.legacyPeople() || {});
     const titles = { general: 'Warnliste', blocked_me: 'Hat mich blockiert (manuell)', blocked_by_me: 'Von mir blockiert', shared: 'Geteilte Liste' };
