@@ -22,7 +22,9 @@ test('Windows installer: preserve custom code, upgrade, remove, refuse corrupt a
     result = run('Uninstall'); assert.equal(result.status, 0, result.stdout + result.stderr);
     const removed = readFileSync(script, 'utf8'); assert.ok(removed.startsWith(original)); assert.ok(!removed.includes('HOST-BEGIN')); assert.ok(removed.includes('RESTORE-BEGIN'));
     result = run('Uninstall'); assert.equal(result.status, 0); assert.equal(readFileSync(script, 'utf8'), removed);
-    writeFileSync(path.join(app, 'Version'), '2026.10.01'); result = run('Install'); assert.equal(result.status, 1); assert.equal(readFileSync(script, 'utf8'), removed);
+    writeFileSync(path.join(app, 'Version'), '2026.11.14'); result = run('Install'); assert.equal(result.status, 0, result.stdout + result.stderr);
+    result = run('Uninstall'); assert.equal(result.status, 0, result.stdout + result.stderr);
+    writeFileSync(path.join(app, 'Version'), '2026.10.01'); result = run('Install'); assert.equal(result.status, 1); assert.ok(readFileSync(script, 'utf8').includes('RESTORE-BEGIN'));
     writeFileSync(path.join(app, 'Version'), '2026.09.16'); writeFileSync(script, '// VRCX-COMMUNITY-HOST-BEGIN'); result = run('Install'); assert.equal(result.status, 1); assert.equal(readFileSync(script, 'utf8'), '// VRCX-COMMUNITY-HOST-BEGIN');
     writeFileSync(script, original);
     const link = path.join(base, 'linked-config'); symlinkSync(config, link, 'junction'); result = run('Install', link); assert.equal(result.status, 1); assert.equal(readFileSync(script, 'utf8'), original);
