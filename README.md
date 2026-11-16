@@ -1,6 +1,6 @@
 # VRCX Community Plugin Host
 
-An independent community plugin manager and versioned JavaScript API for **VRCX 2026.09.16 on Windows**. It loads through VRCX's existing `custom.js` entry point; it does not replace the application or its HTML bundle.
+An independent community plugin manager and versioned JavaScript API for **VRCX 2026.09.16 and 2026.11.14 on Windows**. It loads through VRCX's existing `custom.js` entry point; it does not replace the application or its HTML bundle.
 
 **Early community release.** Not an official VRCX extension API or a VRChat client modification. Only explicitly tested VRCX versions are enabled. Plugins are trusted JavaScript, **not sandboxed**. A real VRChat/SteamVR end-to-end notification test is still outstanding.
 
@@ -14,20 +14,20 @@ An independent community plugin manager and versioned JavaScript API for **VRCX 
 - Built-in people alerts: general watchlist, manually entered “blocked me” list, and the current account's own active VRChat blocks.
 - Alerts on other players joining and on your own instance entry as real user IDs appear in live logs; editable notification templates.
 - Shared lists with visible sources, import/export, pause/remove and manual HTTPS subscription refresh.
-- Update gating and exact VRCX compatibility checks. Unknown releases do not start plugins.
+- Update gating and exact VRCX host-adapter compatibility checks. Unknown VRCX releases do not start the adapter; API-compatible plugins are no longer tied to individual VRCX releases.
 
 No incoming block information is detected, inferred or bypassed. Lists contain local choices or claims from their stated source. No lists or credentials are automatically published.
 
 ## Install
 
-Use the [1.2.0 installation ZIP](downloads/VRCX-Plugin-Manager-1.2.0-fuer-2026.09.16.zip), extract it, close VRCX completely and run `Installieren.cmd`. Restart VRCX and open **Tools → Plugin-Manager · Community-Plugins**. The floating entry remains on the login screen as a fallback. `Entfernen.cmd` removes the manager while preserving stored lists. Read [the installation guide](ANLEITUNG.md) for existing HTML patches, custom data directories, backups and update behavior.
+Host **1.3.0** supports VRCX 2026.09.16 and 2026.11.14. Build it with `npm run build`; pull-request CI also publishes the generated Windows `dist` folder as an artifact for desktop validation. The committed [1.2.0 installation ZIP](downloads/VRCX-Plugin-Manager-1.2.0-fuer-2026.09.16.zip) remains the legacy package for VRCX 2026.09.16. For 1.3.0, extract the generated package, close VRCX completely and run `Installieren.cmd`. Restart VRCX and open **Tools → Plugin-Manager · Community-Plugins**.
 
 The installer modifies only the managed block in your VRCX data directory's `custom.js`, retaining existing code and making backups. It does not reinstall VRCX. Your normal VRCX notification preferences and busy status apply.
 
 ## Develop a plugin
 
 1. Copy [examples/hello-plugin.json](examples/hello-plugin.json).
-2. Choose your own manifest `id`, declare only the API permissions you need, and list tested VRCX versions.
+2. Choose your own manifest `id`, target the supported `apiVersion`, and declare only the API permissions you need. VRCX compatibility is handled by the host adapter.
 3. Put your activation function body in `code`; it receives `api`.
 4. Import the JSON file in the manager. Review the [full API contract](API.md), particularly lifecycle cleanup and incomplete presence snapshots.
 
@@ -51,7 +51,7 @@ npm test
 
 `dist/` is a generated installable folder; it is not committed. Tests include event handling, migration, update gating, UI/lifecycle behavior and real Windows installer fixtures. Windows is required for the installer test; that test is skipped on other systems. The tests use synthetic IDs, never a live user profile.
 
-The dependency is development-only (`jsdom`); the shipped manager has no external JavaScript runtime dependencies. CI builds and runs tests on Windows and Linux.
+The dependency is development-only (`jsdom`); the shipped manager has no external JavaScript runtime dependencies. CI builds and runs tests on Windows and Linux and publishes the Windows `dist` output for manual desktop validation.
 
 ## Project structure
 
