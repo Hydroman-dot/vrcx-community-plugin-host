@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { Presence, normalizePeople, formatTemplate, validatePackage, validateList, serializedRepository } from '../src/core.js';
+import { Presence, normalizePeople, formatTemplate, validatePackage, validateList, serializedRepository, SUPPORTED_VRCX } from '../src/core.js';
 import { createUpdateGate, createAdapter } from '../src/adapter.js';
 import { peoplePlugin } from '../src/people.js';
 const me = 'usr_11111111-1111-1111-1111-111111111111', other = 'usr_22222222-2222-2222-2222-222222222222';
@@ -31,10 +31,15 @@ test('serialized storage recovers after failure and reads only completed writes'
     const r = serializedRepository({ getString: async (k, d) => data.get(k) ?? d, setString: async (k, v) => { if (fail) { fail = false; throw Error('disk'); } data.set(k, v); } });
     await assert.rejects(r.set('x', 1)); await r.set('x', 2); assert.equal(await r.get('x'), 2);
 });
-test('plugin manifest rejects unknown permissions and unsupported API', () => {
-    const p = { manifest: { id: 'sample-plugin', name: 'Sample', version: '1.0.0', apiVersion: 1, permissions: ['events'], vrcxVersions: ['2026.09.16'] }, code: '' };
-    assert.deepEqual(validatePackage(p), p); assert.throws(() => validatePackage({ ...p, manifest: { ...p.manifest, apiVersion: 2 } }));
+test('plugin manifest is API-gated while legacy VRCX metadata remains accepted', () => {
+    const p = { manifest: { id: 'sample-plugin', name: 'Sample', version: '1.0.0', apiVersion: 1, permissions: ['events'] }, code: '' };
+    assert.deepEqual(validatePackage(p), p);
+    const legacy = { ...p, manifest: { ...p.manifest, vrcxVersions: ['2026.09.16'] } };
+    assert.deepEqual(validatePackage(legacy), legacy);
+    assert.throws(() => validatePackage({ ...p, manifest: { ...p.manifest, apiVersion: 2 } }));
     assert.throws(() => validatePackage({ ...p, manifest: { ...p.manifest, permissions: ['native'] } }));
+    assert.throws(() => validatePackage({ ...p, manifest: { ...p.manifest, vrcxVersions: ['bad'] } }));
+    assert.deepEqual(SUPPORTED_VRCX, ['2026.09.16', '2026.11.14']);
 });
 test('native update guard blocks internal download/restart, release restores previous mode', async () => {
     let calls = [], mode; const w = { AppApi: { DownloadUpdate: (...a) => calls.push(a), RestartApplication: x => calls.push(x) },
@@ -56,6 +61,19 @@ test('failed update preference write keeps the guard held and restores stored st
     assert.equal(gate.held, true); assert.equal(mode, 'Off'); assert.equal(persisted.holdUpdates, true);
     assert.throws(() => w.AppApi.DownloadUpdate()); gate.dispose();
 });
+test('adapter uses the 2026.11.14 window bridge and restores it on dispose', () => {
+    let nativeCalls = 0, events = [];
+    const original = () => { nativeCalls++; return 9; };
+    const w = { $bridge: { addGameLogEvent: original },
+        $pinia: { gameLog: {}, game: { isGameRunning: true }, user: { currentUser: { id: me } }, notification: { playNoty() {} },
+            moderation: { cachedPlayerModerations: new Map() } },
+        configRepository: { setString() {} }, setInterval: () => 1, clearInterval() {} };
+    const a = createAdapter(w, (...v) => events.push(v), () => {});
+    assert.equal(w.$bridge.addGameLogEvent(JSON.stringify([0, new Date().toISOString(), 'location', where])), 9);
+    assert.equal(nativeCalls, 1); assert.equal(a.snapshot().location, where);
+    a.dispose(); assert.equal(w.$bridge.addGameLogEvent, original);
+});
+
 test('adapter preserves native handler, resets on account switch, filters own blocks', () => {
     let tick, nativeCalls = 0, events = [];
     const original = () => { nativeCalls++; return 7; };
